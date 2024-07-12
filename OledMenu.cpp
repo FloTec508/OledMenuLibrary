@@ -68,6 +68,13 @@ const unsigned char WifiBad[] PROGMEM = {
 
 };
 
+const unsigned char* batterystatus[] = {
+  BatteryEmpty,
+  BatteryLow, 
+  BatteryHalf,
+  BatteryFull
+};
+
 int addr = 0;    // I2C addres
 int reset = -1;  // reset pin of the screen
 int height = 64; // Screen height
@@ -114,11 +121,11 @@ OledMenu::OledMenu(int SCREEN_ADDRESS, int SCREEN_HEIGHT, int SCREEN_WIDTH, int 
   screen = Adafruit_SSD1306(width, height, &Wire, reset);
 }
 
-void OledMenu::getSliderValue(int field){
+int OledMenu::getSliderValue(int field){
   return sliderValues[field];
 }
 void OledMenu::setSliderValue(int field, int value){
-  slider[field] = value;
+  sliderValues[field] = value;
 }
 void OledMenu::addStatusBarItem(int type)//add an item to the StatusBar
 {
@@ -218,19 +225,27 @@ void OledMenu::updateDashboard(struct tm time, int wifi_status, bool bluetoothCo
   switch (statusBar[0])
   {
   case 0:
+    if(bluetoothConnected){
     screen.drawBitmap(2, 2, Bluetooth, IMAGE_WIDTH, IMAGE_HEIGHT, 1);
+    }
     break;
 
   case 1:
-    screen.drawBitmap(2, 2, BatteryFull, IMAGE_WIDTH, IMAGE_HEIGHT, 1);
+    screen.setFont(&FreeMono9pt7b);
+    screen.setCursor(2, 10);
+    screen.printf("%fV", battery_Voltage);
     break;
 
   case 2:
-    screen.drawBitmap(2, 2, BatteryHalf, IMAGE_WIDTH, IMAGE_HEIGHT, 1);
+    screen.drawBitmap(2, 2, batterystatus[batteryStatus], IMAGE_WIDTH, IMAGE_HEIGHT, 1);
     break;
 
   case 3:
-    screen.drawBitmap(2, 2, WifiFull, WIFI_WIDTH, WIFI_HEIGHT, 1);
+    if(wifi_status == 1){
+      screen.drawBitmap(2, 2, WifiFull, WIFI_WIDTH, WIFI_HEIGHT, 1);
+    }else{
+      screen.drawBitmap(2, 2, WifiBad, WIFI_WIDTH, WIFI_HEIGHT, 1);
+    }    
     break;
   default:
     break;
@@ -238,21 +253,27 @@ void OledMenu::updateDashboard(struct tm time, int wifi_status, bool bluetoothCo
   switch (statusBar[1])
   {
   case 0:
+    if(bluetoothConnected){
     screen.drawBitmap(16, 2, Bluetooth, IMAGE_WIDTH, IMAGE_HEIGHT, 1);
+    }
     break;
 
   case 1:
     screen.setFont(&FreeMono9pt7b);
     screen.setCursor(16, 10);
-    screen.print("3.65V");
+    screen.printf("%fV", battery_Voltage);
     break;
 
   case 2:
-    screen.drawBitmap(16, 2, BatteryHalf, IMAGE_WIDTH, IMAGE_HEIGHT, 1);
+    screen.drawBitmap(16, 2, batterystatus[batteryStatus], IMAGE_WIDTH, IMAGE_HEIGHT, 1);
     break;
 
   case 3:
+  if(wifi_status == 1){
     screen.drawBitmap(16, 2, WifiFull, WIFI_WIDTH, WIFI_HEIGHT, 1);
+  }else{
+    screen.drawBitmap(16, 2, WifiBad, WIFI_WIDTH, WIFI_HEIGHT, 1);
+  }
     break;
   default:
     break;
@@ -260,21 +281,27 @@ void OledMenu::updateDashboard(struct tm time, int wifi_status, bool bluetoothCo
   switch (statusBar[2])
   {
   case 0:
+  if(bluetoothConnected){
     screen.drawBitmap(100, 2, Bluetooth, IMAGE_WIDTH, IMAGE_HEIGHT, 1);
+    }
     break;
 
   case 1:
     screen.setFont(&FreeMono9pt7b);
     screen.setCursor(100, 10);
-    screen.print("3.65V");
+    screen.printf("%fV", battery_Voltage);
     break;
 
   case 2:
-    screen.drawBitmap(100, 2, BatteryHalf, IMAGE_WIDTH, IMAGE_HEIGHT, 1);
+    screen.drawBitmap(100, 2, batterystatus[batteryStatus], IMAGE_WIDTH, IMAGE_HEIGHT, 1);
     break;
 
   case 3:
+  if(wifi_status == 1){
     screen.drawBitmap(100, 2, WifiFull, WIFI_WIDTH, WIFI_HEIGHT, 1);
+    }else{
+    screen.drawBitmap(100, 2, WifiBad, WIFI_WIDTH, WIFI_HEIGHT, 1);
+    }
     break;
   default:
     break;
@@ -282,98 +309,124 @@ void OledMenu::updateDashboard(struct tm time, int wifi_status, bool bluetoothCo
   switch (statusBar[3])
   {
   case 0:
+  if(bluetoothConnected){
     screen.drawBitmap(112, 2, Bluetooth, IMAGE_WIDTH, IMAGE_HEIGHT, 1);
-    break;
+  }
+  break;
 
   case 1:
     screen.setFont(&FreeMono9pt7b);
     screen.setCursor(112, 10);
-    screen.print("3.65V");
+    screen.printf("%fV", battery_Voltage);
     break;
 
   case 2:
-    screen.drawBitmap(112, 2, BatteryHalf, IMAGE_WIDTH, IMAGE_HEIGHT, 1);
+    screen.drawBitmap(112, 2, batterystatus[batteryStatus], IMAGE_WIDTH, IMAGE_HEIGHT, 1);
     break;
 
   case 3:
+  if(wifi_status == 1){
     screen.drawBitmap(112, 2, WifiFull, WIFI_WIDTH, WIFI_HEIGHT, 1);
+  }else{
+    screen.drawBitmap(112, 2, WifiBad, WIFI_WIDTH, WIFI_HEIGHT, 1);
+  }
     break;
   default:
     break;
   }
-
+screen.display();
 // draw the dashboard
-//calculate the position of the 1st element
-  switch (dashBoard[0])
-  {
-  case 0:
-    timeHeight = (height / 4) + 22;
-    prevHeight = timeHeight + 5;
-    break;
-
-  case 1:
-    dateheight = (height / 4) + 10;
-    prevHeight = dateheight + 5;
-    break;
-
-  case 2:
-    lineheight = ((height / 4));
-    prevHeight = lineheight + 3;
-    break;
-  default:
-    break;
-  }
- //calculate the position of the 2nd element
-  switch (dashBoard[1])
-  {
-  case 0:
-    timeHeight = prevHeight + 22;
-    prevHeight = timeHeight + 5;
-    break;
-  case 1:
-    dateheight = prevHeight + 10;
-    prevHeight = dateheight + 3;
-    break;
-  case 2:
-    lineheight = prevHeight;
-    prevHeight = lineheight + 3;
-    break;
-
-  default:
-    break;
-  }
   //calculate the position of the 3rd element
-  switch (dashBoard[2])
-  {
-  case 0:
-    timeHeight = prevHeight;
-    prevHeight = 5;
-    break;
-  case 1:
-    dateheight = prevHeight + 10;
-    prevHeight = 3;
-    break;
-  case 2:
-    lineheight = prevHeight;
-    prevHeight = 3;
-    break;
-
-  default:
-    break;
-  }
+  
 
   //when the notification center isn't active, show the dashboard
   if (notify_center == false)
   {
+    switch (dashBoard[0])
+    {
+    case 0:
+    timeHeight = (height / 4) + 22;
+    prevHeight = timeHeight + 5;
     screen.setFont(&FreeMonoBold18pt7b);
     screen.setTextColor(1);
     screen.setCursor(10, timeHeight);
-    screen.drawLine(8, lineheight, 120, lineheight, 1);
     screen.printf("%d:%d", time.tm_hour, time.tm_min);
+      break;
+    case 1:
+    dateheight = (height / 4) + 10;
+    prevHeight = dateheight + 5;
     screen.setFont(&FreeMonoBold9pt7b);
     screen.setCursor(8, dateheight);
-    // screen.print("03/12/24");
     screen.printf("%d/%d/%d", time.tm_mday, time.tm_mon + 1, time.tm_year);
+      break;
+    case 2:
+    lineheight = ((height / 4));
+    prevHeight = lineheight + 3;
+    screen.drawLine(8, lineheight, 120, lineheight, 1);
+      break;
+    default:
+      break;
+    }
+
+    switch (dashBoard[1])
+    {
+    case 0:
+    timeHeight = prevHeight + 22;
+    prevHeight = timeHeight + 5;
+    screen.setFont(&FreeMonoBold18pt7b);
+    screen.setTextColor(1);
+    screen.setCursor(10, timeHeight);
+    screen.printf("%d:%d", time.tm_hour, time.tm_min);
+      break;
+    case 1:
+    dateheight = prevHeight + 10;
+    prevHeight = dateheight + 3;
+    screen.setFont(&FreeMonoBold9pt7b);
+    screen.setCursor(8, dateheight);
+    screen.printf("%d/%d/%d", time.tm_mday, time.tm_mon + 1, time.tm_year);
+      break;
+    case 2:
+    lineheight = prevHeight;
+    prevHeight = lineheight + 3;
+    screen.drawLine(8, lineheight, 120, lineheight, 1);
+      break;
+    default:
+      break;
+    }
+    switch (dashBoard[2])
+    {
+    case 0:
+    timeHeight = prevHeight + 22;
+    prevHeight = timeHeight + 5;
+    screen.setFont(&FreeMonoBold18pt7b);
+    screen.setTextColor(1);
+    screen.setCursor(10, timeHeight);
+    screen.printf("%d:%d", time.tm_hour, time.tm_min);
+      break;
+    case 1:
+    dateheight = prevHeight + 10;
+    prevHeight = dateheight + 3;
+    screen.setFont(&FreeMonoBold9pt7b);
+    screen.setCursor(8, dateheight);
+    screen.printf("%d/%d/%d", time.tm_mday, time.tm_mon + 1, time.tm_year);
+      break;
+    case 2:
+    lineheight = prevHeight;
+    prevHeight = lineheight + 3;
+    screen.drawLine(8, lineheight, 120, lineheight, 1);
+      break;
+    default:
+      break;
+    }
+
+    //screen.setFont(&FreeMonoBold18pt7b);
+    //screen.setTextColor(1);
+    //screen.setCursor(10, timeHeight);
+    //screen.drawLine(8, lineheight, 120, lineheight, 1);
+    //screen.printf("%d:%d", time.tm_hour, time.tm_min);
+    //screen.setFont(&FreeMonoBold9pt7b);
+    //screen.setCursor(8, dateheight);
+    //screen.printf("%d/%d/%d", time.tm_mday, time.tm_mon + 1, time.tm_year);
 
     screen.display();
   }
@@ -828,13 +881,13 @@ void OledMenu::startMenu(bool loop)
     int startpoint = (width - (strlen(MenuTitle) * 10)) / 2;
     int length = (strlen(MenuTitle) * 7) + ((strlen(MenuTitle) - 1) * 2);
     screen.setFont(&FreeSansBold9pt7b);
-    screen.setCursor(startpoint, 16);
+    screen.setCursor(startpoint, height/4);
     screen.setTextSize(1);
     screen.print(MenuTitle);
     screen.setFont(&FreeSans9pt7b);
     if (titleUnderline == true)
     {
-      screen.drawLine(startpoint, 18, (startpoint + length), 18, 1);
+      screen.drawLine(startpoint, (height/4)+2, (startpoint + length), (height/4)+2, 1);
     }
   }
 
@@ -844,88 +897,88 @@ void OledMenu::startMenu(bool loop)
   {
     if (styles[selected - 1] == standard)
     {
-      screen.setCursor(30, 12);
+      screen.setCursor(30, (height/8)+4);
       screen.setTextSize(1);
       screen.setTextColor(SSD1306_WHITE);
       screen.print(MenuItems[selected - 1]);
       if (pictures[selected - 1] != NULL)
       {
-        screen.drawBitmap(2, 2, pictures[selected - 1], LOGO_WIDTH, LOGO_HEIGHT, 1);
+        screen.drawBitmap(2, height/32, pictures[selected - 1], LOGO_WIDTH, LOGO_HEIGHT, 1);
       }
     }
     else if (styles[selected - 1] == toggle)
     {
-      screen.setCursor(10, 12);
+      screen.setCursor(10, (height/8)+4);
       screen.setTextColor(SSD1306_WHITE);
       screen.setTextSize(1);
       screen.print(MenuItems[selected - 1]);
       if (toggles[selected - 1] == false)
       {
-        screen.fillCircle(100, 9, 5, 1);
+        screen.fillCircle(100, (height/8)+1, 5, 1);
       }
       else
       {
-        screen.fillCircle(115, 9, 5, 1);
+        screen.fillCircle(115, (height/8)+1, 5, 1);
       }
-      screen.drawRoundRect(93, 2, 30, 15, 4, 1);
+      screen.drawRoundRect(93, height/32, 30, (height/4)-1, 4, 1);
     }
     else if (styles[selected - 1] == slider)
     {
-      screen.setCursor(10, 12);
+      screen.setCursor(10, (height/8)+4);
       screen.setTextColor(SSD1306_WHITE);
       screen.setTextSize(1);
       screen.print(MenuItems[selected - 1]);
 
-      screen.setCursor(100, 12);
+      screen.setCursor(100, (height/8)+4);
       screen.print(sliderValues[selected - 1]);
 
-      screen.drawTriangle(120, 3, 126, 6, 120, 9, 1);
+      screen.drawTriangle(120, (height/32)+1, 126, (height/16)+2, 120, (height/8)+1, 1);
     }
   }
   // menu point 2 (selected)---------------------------------
   if (styles[selected] == standard)
   {
-    screen.drawRoundRect(0, 22, 128, 21, 2, 2); // Draws a rounded rectangle around the text and pictogram to mark it as selected
-    screen.setCursor(30, 36);
+    screen.drawRoundRect(0, (height/3)+1, 128, height/3, 2, 2); // Draws a rounded rectangle around the text and pictogram to mark it as selected
+    screen.setCursor(30, (height/2)+4);
     screen.setTextColor(SSD1306_WHITE);
 
     screen.setTextSize(1);
     screen.print(MenuItems[selected]);
-    if (pictures[selected] != NULL)
+    if (pictures[selected] != NULL) 
     {
 
-      screen.drawBitmap(2, 27, pictures[selected], LOGO_WIDTH, LOGO_HEIGHT, 1);
+      screen.drawBitmap(2, (height/3)+6, pictures[selected], LOGO_WIDTH, LOGO_HEIGHT, 1);
     }
   }
   else if (styles[selected] == toggle)
   {
-    screen.drawRoundRect(0, 22, 128, 21, 2, 2); // Draws a rounded rectangle around the text and pictogram to mark it as selected
-    screen.setCursor(10, 36);
+    screen.drawRoundRect(0, (height/3)+1, 128, height/3, 2, 2); // Draws a rounded rectangle around the text and pictogram to mark it as selected
+    screen.setCursor(10, (height/2)+4);
     screen.setTextColor(SSD1306_WHITE);
     screen.setTextSize(1);
     screen.print(MenuItems[selected]);
     if (toggles[selected] == false)
     {
-      screen.fillCircle(100, 32, 5, 1);
+      screen.fillCircle(100, height/2, (height/16)+1, 1);
     }
     else
     {
-      screen.fillCircle(115, 32, 5, 1);
+      screen.fillCircle(115, height/2, (height/16)+1, 1);
     }
-    screen.drawRoundRect(93, 25, 30, 15, 4, 1);
+    screen.drawRoundRect(93, (height/3)+4, 30, (height/4), (height/16), 1);
   }
   else if (styles[selected] == slider)
   {
-    screen.drawRoundRect(0, 22, 128, 21, 2, 2); // Draws a rounded rectangle around the text and pictogram to mark it as selected
-    screen.setCursor(10, 36);
+    screen.drawRoundRect(0, (height/3)+1, 128, height/3, 2, 2); // Draws a rounded rectangle around the text and pictogram to mark it as selected
+    screen.setCursor(10, (height/2)+4);
     screen.setTextColor(SSD1306_WHITE);
     screen.setTextSize(1);
     screen.print(MenuItems[selected]);
 
-    screen.setCursor(100, 36);
+    screen.setCursor(100, (height/2)+4);
     screen.print(sliderValues[selected]);
 
-    screen.drawTriangle(120, 27, 126, 30, 120, 35, 1);
+    screen.drawTriangle(120, (height/3)+6, 126, (height/2)-2, 120, (height/2)+3, 1);
   }
 
   // menu point 3----------------------------------------
@@ -933,12 +986,12 @@ void OledMenu::startMenu(bool loop)
   {
     if (styles[selected + 1] == standard)
     {
-      screen.setCursor(30, 56);
+      screen.setCursor(30, (height/4)*4);
       screen.setTextColor(SSD1306_WHITE);
       screen.print(MenuItems[selected + 1]);
       if (pictures[selected + 1] != NULL)
       {
-        screen.drawBitmap(2, 47, pictures[selected + 1], LOGO_WIDTH, LOGO_HEIGHT, 1);
+        screen.drawBitmap(2, height/1.361702127659574, pictures[selected + 1], LOGO_WIDTH, LOGO_HEIGHT, 1);
       }
     }
     else if (styles[selected + 1] == toggle)

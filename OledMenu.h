@@ -64,7 +64,7 @@ public:
     //get the given Silder Value
     int getSliderValue(int field);
 
-    int setSliderValue(int field, int value);
+    void setSliderValue(int field, int value);
     // max sets the maximum number that the user can select, label sets a small label to let the user know what input is wanted.
     void numberPicker(int max, char label[]);
 
