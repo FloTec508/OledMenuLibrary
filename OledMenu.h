@@ -37,7 +37,7 @@ class OledMenu
 {
 public:
     // constructor
-    OledMenu(int SCREEN_ADDRESS, int SCREEN_HEIGHT, int SCREEN_WIDTH, int OLED_RESET);
+    OledMenu(int SCREEN_ADDRESS, int SCREEN_HEIGHT, int SCREEN_WIDTH, int OLED_RESET, int type = 0);
     // methods
 
     bool initialize(uint8_t switchvcc = SSD1306_SWITCHCAPVCC, uint8_t i2caddr = 0); // initializes the screen as "screen". returns FALSE if display allocation failed
@@ -46,7 +46,7 @@ public:
 
     void clear();
 
-    void addMenuItem(char label[], const unsigned char picture[] = NULL, int style = 0); // pictogram can be set to NULL for a pictureless Menu item
+    void addMenuItem(char label[], const unsigned char picture[] = NULL, int style = 0, int sliderMaxVal=10); // pictogram can be set to NULL for a pictureless Menu item
 
     void addMenuTitle(char title[], bool underline = true); // add a title to the menu
 
@@ -68,7 +68,7 @@ public:
     // max sets the maximum number that the user can select, label sets a small label to let the user know what input is wanted.
     void numberPicker(int max, char label[]);
 
-    int startslider(int val = 0, int maxval = 10);
+    int startslider(int val = 0, int maxVal = 10);
 
 
     //functions for working with the dashboard

@@ -12,6 +12,7 @@
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
+#include <Adafruit_SH110X.h>
 #include <Fonts/FreeSansBold9pt7b.h>
 #include <Fonts/FreeSans9pt7b.h>
 #include <Fonts/FreeSansBold12pt7b.h>
@@ -80,7 +81,9 @@ int reset = -1;  // reset pin of the screen
 int height = 64; // Screen height
 int width = 128; // Screen width
 
-Adafruit_SSD1306 screen(width, height, &Wire, reset); // initialize the screen
+
+Adafruit_SH1106G screen(width, height, &Wire, reset); 
+
 
 int piclength = 0;  // the length of the picture array
 int menulength = 0; // the length of the menuItems array
@@ -105,9 +108,12 @@ int dashBoard[3] = {}; // the items in the dashboard
 
 bool notify_center = false; // are we in the notifiocation overwiew?
 
+int sliderMaxValues[50] = {};
+
 unsigned char pictures[50][100] = {0}; // all the Pictures of the menu(max.50)
 
-OledMenu::OledMenu(int SCREEN_ADDRESS, int SCREEN_HEIGHT, int SCREEN_WIDTH, int OLED_RESET)
+int screenType = 0;//what type of driver? 0=SSD1306, 1=SH110X
+OledMenu::OledMenu(int SCREEN_ADDRESS, int SCREEN_HEIGHT, int SCREEN_WIDTH, int OLED_RESET, int type)
 {
 
   // Set all the parameters
@@ -117,8 +123,10 @@ OledMenu::OledMenu(int SCREEN_ADDRESS, int SCREEN_HEIGHT, int SCREEN_WIDTH, int 
   width = SCREEN_WIDTH;
 
   // and initialize the Screen
-
-  screen = Adafruit_SSD1306(width, height, &Wire, reset);
+ 
+  screen = Adafruit_SH1106G(width, height, &Wire, reset);
+  screenType = type;
+  
 }
 
 int OledMenu::getSliderValue(int field){
@@ -345,7 +353,7 @@ screen.display();
     switch (dashBoard[0])
     {
     case 0:
-    timeHeight = (height / 4) + 22;
+    timeHeight = height*0.59375;
     prevHeight = timeHeight + 5;
     screen.setFont(&FreeMonoBold18pt7b);
     screen.setTextColor(1);
@@ -353,7 +361,7 @@ screen.display();
     screen.printf("%d:%d", time.tm_hour, time.tm_min);
       break;
     case 1:
-    dateheight = (height / 4) + 10;
+    dateheight = height*0.40625;
     prevHeight = dateheight + 5;
     screen.setFont(&FreeMonoBold9pt7b);
     screen.setCursor(8, dateheight);
@@ -482,7 +490,7 @@ void OledMenu::numberPicker(int max, char label[])
   int digit3 = 0;       // current selection of the third number
 
   int digits[] = {
-      120,
+      120,//just a random number as a spacer
       digit1,
       digit2,
       digit3};
@@ -548,23 +556,24 @@ void OledMenu::numberPicker(int max, char label[])
     screen.setTextColor(SSD1306_WHITE);
     screen.setTextSize(1);
     // draw the title-text
-    screen.setCursor(5, 10);
+    screen.setCursor(5, height*0.15625);
     screen.setFont(&FreeSans9pt7b);
     screen.print("select");
-    screen.setCursor(5, 30);
+    screen.setCursor(5, height*0.46875);
     screen.print(label);
     screen.setFont(&FreeSans12pt7b);
+
     // draw the selected number
-    screen.setCursor(100, 40);
+    screen.setCursor(100, height*0.625);
     screen.setFont(&FreeSansBold12pt7b);
     screen.print(current);
 
-    screen.drawLine(100, 20, 117, 20, 1);
-    screen.drawLine(100, 45, 117, 45, 1);
+    screen.drawLine(100, height*0.3125, 117, height*0.3125, 1);
+    screen.drawLine(100, height*0.703125, 117, height*.703125, 1);
     // draw the number before the selected one
     if (digits[currentdigit] != 0)
     {
-      screen.setCursor(100, 14);
+      screen.setCursor(100, height*0.21875);
       screen.setTextColor(SSD1306_WHITE);
       screen.setTextSize(1);
       screen.setFont(&FreeSans12pt7b);
@@ -573,7 +582,7 @@ void OledMenu::numberPicker(int max, char label[])
     // draw the number after the selected one
     if (digits[currentdigit] != 9)
     {
-      screen.setCursor(100, 64);
+      screen.setCursor(100, height);
       screen.setTextColor(SSD1306_WHITE);
       screen.setTextSize(1);
       screen.setFont(&FreeSans12pt7b);
@@ -585,14 +594,14 @@ void OledMenu::numberPicker(int max, char label[])
     {
 
       // draw the selected number
-      screen.setCursor(80, 40);
+      screen.setCursor(80, height*0.625);
       screen.setFont(&FreeSansBold12pt7b);
       screen.print(digits[currentdigit - 1]);
 
       // draw the number before the selected one
       if (digits[currentdigit - 1] != 0)
       {
-        screen.setCursor(80, 14);
+        screen.setCursor(80, height*0.21875);
         screen.setTextColor(SSD1306_WHITE);
         screen.setTextSize(1);
         screen.setFont(&FreeSans12pt7b);
@@ -601,7 +610,7 @@ void OledMenu::numberPicker(int max, char label[])
       // draw the number after the selected one
       if (digits[currentdigit - 1] != 9)
       {
-        screen.setCursor(80, 64);
+        screen.setCursor(80, height);
         screen.setTextColor(SSD1306_WHITE);
         screen.setTextSize(1);
         screen.setFont(&FreeSans12pt7b);
@@ -612,14 +621,14 @@ void OledMenu::numberPicker(int max, char label[])
     if (currentdigit == 3)
     {
       // draw the selected number
-      screen.setCursor(60, 40);
+      screen.setCursor(60, height*0.625);
       screen.setFont(&FreeSansBold12pt7b);
       screen.print(digits[currentdigit - 2]);
 
       // draw the number before the selected one
       if (digits[currentdigit - 2] != 0)
       {
-        screen.setCursor(60, 14);
+        screen.setCursor(60, height*0.21875);
         screen.setTextColor(SSD1306_WHITE);
         screen.setTextSize(1);
         screen.setFont(&FreeSans12pt7b);
@@ -628,7 +637,7 @@ void OledMenu::numberPicker(int max, char label[])
       // draw the number after the selected one
       if (digits[currentdigit - 2] != 9)
       {
-        screen.setCursor(60, 64);
+        screen.setCursor(60, height);
         screen.setTextColor(SSD1306_WHITE);
         screen.setTextSize(1);
         screen.setFont(&FreeSans12pt7b);
@@ -666,26 +675,44 @@ bool OledMenu::initialize(uint8_t switchvcc, uint8_t i2caddr)
 {
 
   // if the screen.begin() hasn't been successful, than return false
+  if(screenType == 0){
   if (!screen.begin(switchvcc, i2caddr))
   {
     initialized = false;
     return false;
   }
   else
-  { // eslwaz continue the initialisation and return "true"
+  { // otherwise, continue the initialisation and return "true"
     screen.display();
     delay(500);
     screen.clearDisplay();
     initialized = true;
     return true;
   }
+  }else if(screenType==1){
+    if (!screen.begin(i2caddr, true))
+  {
+    initialized = false;
+    return false;
+  }
+  else
+  { // otherwise, continue the initialisation and return "true"
+    screen.display();
+    delay(500);
+    screen.clearDisplay();
+    initialized = true;
+    return true;
+  }
+  }
 }
 
-void OledMenu::addMenuItem(char label[], const unsigned char picture[], int style)
+void OledMenu::addMenuItem(char label[], const unsigned char picture[], int style, int sliderMaxVal)
 {
 
   // copy the text string into our text-array
   strcpy(MenuItems[indx], label);
+
+  sliderMaxValues[indx] = sliderMaxVal;
 
   // if a picture is provided, copy it
   if (picture != NULL)
@@ -760,10 +787,10 @@ void OledMenu::setToggleValue(int field, bool value)
   toggles[field] = value;
 }
 
-int OledMenu::startslider(int val, int maxval)
+int OledMenu::startslider(int val, int maxVal)
 {
   int sliderwidth = 92;
-  int maxVal = maxval;
+  
   bool entered = false;
   // get key inputs
   while (entered == false)
@@ -775,7 +802,7 @@ int OledMenu::startslider(int val, int maxval)
     }
     if ((digitalRead(LEFT) == HIGH) && (pressedleft == 0) && (LEFT != NULL))
     {
-      if (val < 10)
+      if (val < maxVal)
       {
         val++;
       }
@@ -794,9 +821,9 @@ int OledMenu::startslider(int val, int maxval)
 
     //--------draw the slider--------------------------------------------
 
-    screen.fillRect(10, 10, 108, 44, 0); // a black backgroud to overdraw the background graphics
-    screen.drawRoundRect(10, 10, 108, 44, 3, 1);
-    screen.drawLine(18, 33, 110, 33, 1);
+    screen.fillRect(10, height/6.4, 108, height*0.6875, 0); // a black backgroud to overdraw the background graphics
+    screen.drawRoundRect(10, height/6.4, 108, height*0.6875, 3, 1);
+    screen.drawLine(18, height*0.515625, 110, height*0.515625, 1);
     screen.fillCircle(18 + sliderpos, 33, 4, 1);
     screen.setCursor(63, 25);
     screen.setFont(&FreeSans9pt7b);
@@ -853,7 +880,7 @@ void OledMenu::startMenu(bool loop)
     else if (styles[selected] == slider)
     {
       entered = 2;
-      sliderValues[selected] = startslider(sliderValues[selected]);
+      sliderValues[selected] = startslider(sliderValues[selected], sliderMaxValues[selected]);
     }
     else
     {
@@ -929,7 +956,7 @@ void OledMenu::startMenu(bool loop)
       screen.setTextSize(1);
       screen.print(MenuItems[selected - 1]);
 
-      screen.setCursor(100, (height/8)+4);
+      screen.setCursor(98, (height/8)+4);
       screen.print(sliderValues[selected - 1]);
 
       screen.drawTriangle(120, (height/32)+1, 126, (height/16)+2, 120, (height/8)+1, 1);
@@ -975,7 +1002,7 @@ void OledMenu::startMenu(bool loop)
     screen.setTextSize(1);
     screen.print(MenuItems[selected]);
 
-    screen.setCursor(100, (height/2)+4);
+    screen.setCursor(96, (height/2)+4);
     screen.print(sliderValues[selected]);
 
     screen.drawTriangle(120, (height/3)+6, 126, (height/2)-2, 120, (height/2)+3, 1);
@@ -1017,7 +1044,7 @@ void OledMenu::startMenu(bool loop)
       screen.setTextSize(1);
       screen.print(MenuItems[selected + 1]);
 
-      screen.setCursor(100, 56);
+      screen.setCursor(96, 56);
       screen.print(sliderValues[selected + 1]);
 
       screen.drawTriangle(120, 47, 126, 50, 120, 55, 1);
