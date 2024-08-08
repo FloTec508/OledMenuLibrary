@@ -3,6 +3,9 @@ An Arduino library for creating menus with Arduino
 
 # Introduction
 
+
+**CAUTION: WORK IN PROGRESS!: NOT COMPLETE YET!**
+
 This library allows you to easily create simple, modern menus and other UI-related graphics like a configurable dashboard and a number picker. This library uses the 'Adafruit_SSD1306' and 'Adafruit_GFX' library for handling the display. These two libraries are required and have to be installed in order to use the 'OledMenu' library.
 
 # How to use
